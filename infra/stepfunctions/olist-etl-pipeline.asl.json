@@ -1,0 +1,23 @@
+{
+  "Comment": "Run silver then gold Glue ETL, wait for each to complete",
+  "StartAt": "RunSilverEtl",
+  "States": {
+    "RunSilverEtl": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Arguments": {
+        "JobName": "olist-silver-etl"
+      },
+      "Next": "RunGoldEtl"
+    },
+    "RunGoldEtl": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Arguments": {
+        "JobName": "olist-gold-etl"
+      },
+      "End": true
+    }
+  },
+  "QueryLanguage": "JSONata"
+}

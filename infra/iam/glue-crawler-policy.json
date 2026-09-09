@@ -1,0 +1,63 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CrawlerS3Read",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:GetBucketLocation",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::olist-raw-839553328980",
+        "arn:aws:s3:::olist-raw-839553328980/*",
+        "arn:aws:s3:::olist-silver-839553328980",
+        "arn:aws:s3:::olist-silver-839553328980/*",
+        "arn:aws:s3:::olist-curated-839553328980",
+        "arn:aws:s3:::olist-curated-839553328980/*"
+      ]
+    },
+    {
+      "Sid": "CrawlerDataCatalog",
+      "Effect": "Allow",
+      "Action": [
+        "glue:GetDatabase",
+        "glue:GetDatabases",
+        "glue:GetTable",
+        "glue:GetTables",
+        "glue:GetPartition",
+        "glue:GetPartitions",
+        "glue:CreateTable",
+        "glue:UpdateTable",
+        "glue:DeleteTable",
+        "glue:CreatePartition",
+        "glue:UpdatePartition",
+        "glue:DeletePartition",
+        "glue:BatchCreatePartition",
+        "glue:BatchDeletePartition"
+      ],
+      "Resource": [
+        "arn:aws:glue:us-east-1:839553328980:database/olist_raw",
+        "arn:aws:glue:us-east-1:839553328980:database/olist_silver",
+        "arn:aws:glue:us-east-1:839553328980:database/olist_gold",
+        "arn:aws:glue:us-east-1:839553328980:table/olist_raw/*",
+        "arn:aws:glue:us-east-1:839553328980:table/olist_silver/*",
+        "arn:aws:glue:us-east-1:839553328980:table/olist_gold/*",
+        "arn:aws:glue:us-east-1:839553328980:catalog"
+      ]
+    },
+    {
+      "Sid": "CrawlerLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:*:*:/aws-glue/crawlers"
+      ]
+    }
+  ]
+}

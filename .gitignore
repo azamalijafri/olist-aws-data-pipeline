@@ -1,0 +1,16 @@
+# Local data (never commit large CSVs)
+data/
+
+# AWS credentials / config
+.aws/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
