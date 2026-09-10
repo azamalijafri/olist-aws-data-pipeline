@@ -1,23 +1,61 @@
 {
-  "Comment": "Run silver then gold Glue ETL, wait for each to complete",
-  "StartAt": "RunSilverEtl",
+  "Comment": "Iceberg medallion pipeline: bronze, silver, gold ETL jobs in sequence",
+  "QueryLanguage": "JSONata",
+  "StartAt": "RunBronzeEtl",
   "States": {
+    "RunBronzeEtl": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Arguments": {
+        "JobName": "${JOB_BRONZE}"
+      },
+      "Next": "RunSilverEtl",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "Glue.JOB_RUN_FAILED_CANCELED"
+          ],
+          "Next": "Fail"
+        }
+      ]
+    },
     "RunSilverEtl": {
       "Type": "Task",
       "Resource": "arn:aws:states:::glue:startJobRun.sync",
       "Arguments": {
-        "JobName": "olist-silver-etl"
+        "JobName": "${JOB_SILVER}"
       },
-      "Next": "RunGoldEtl"
+      "Next": "RunGoldEtl",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "Glue.JOB_RUN_FAILED_CANCELED"
+          ],
+          "Next": "Fail"
+        }
+      ]
     },
     "RunGoldEtl": {
       "Type": "Task",
       "Resource": "arn:aws:states:::glue:startJobRun.sync",
       "Arguments": {
-        "JobName": "olist-gold-etl"
+        "JobName": "${JOB_GOLD}"
       },
-      "End": true
+      "Next": "Succeed",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "Glue.JOB_RUN_FAILED_CANCELED"
+          ],
+          "Next": "Fail"
+        }
+      ]
+    },
+    "Succeed": {
+      "Type": "Succeed"
+    },
+    "Fail": {
+      "Type": "Fail"
     }
-  },
-  "QueryLanguage": "JSONata"
+  }
 }

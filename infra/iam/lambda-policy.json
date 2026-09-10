@@ -1,0 +1,51 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadKinesis",
+      "Effect": "Allow",
+      "Action": [
+        "kinesis:DescribeStream",
+        "kinesis:DescribeStreamSummary",
+        "kinesis:GetRecords",
+        "kinesis:GetShardIterator",
+        "kinesis:ListShards"
+      ],
+      "Resource": "arn:aws:kinesis:${OLIST_REGION}:${OLIST_ACCOUNT}:stream/${KINESIS_STREAM}"
+    },
+    {
+      "Sid": "WriteStreamLanding",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${BUCKET_STREAM}",
+        "arn:aws:s3:::${BUCKET_STREAM}/*"
+      ]
+    },
+    {
+      "Sid": "UpdateLiveMetrics",
+      "Effect": "Allow",
+      "Action": "dynamodb:UpdateItem",
+      "Resource": "arn:aws:dynamodb:${OLIST_REGION}:${OLIST_ACCOUNT}:table/${DDB_TABLE}"
+    },
+    {
+      "Sid": "InvokeSelf",
+      "Effect": "Allow",
+      "Action": "lambda:InvokeFunction",
+      "Resource": "arn:aws:lambda:${OLIST_REGION}:${OLIST_ACCOUNT}:function:${LAMBDA_FUNCTION}"
+    },
+    {
+      "Sid": "CloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:${OLIST_REGION}:${OLIST_ACCOUNT}:log-group:/aws/lambda/${LAMBDA_FUNCTION}:*"
+    }
+  ]
+}

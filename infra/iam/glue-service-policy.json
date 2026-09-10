@@ -11,12 +11,14 @@
         "s3:ListBucket"
       ],
       "Resource": [
-        "arn:aws:s3:::olist-raw-*/*",
-        "arn:aws:s3:::olist-silver-*/*",
-        "arn:aws:s3:::olist-curated-*/*",
-        "arn:aws:s3:::olist-raw-*",
-        "arn:aws:s3:::olist-silver-*",
-        "arn:aws:s3:::olist-curated-*"
+        "arn:aws:s3:::${BUCKET_BRONZE}/*",
+        "arn:aws:s3:::${BUCKET_RAW}/*",
+        "arn:aws:s3:::${BUCKET_SILVER}/*",
+        "arn:aws:s3:::${BUCKET_CURATED}/*",
+        "arn:aws:s3:::${BUCKET_BRONZE}",
+        "arn:aws:s3:::${BUCKET_RAW}",
+        "arn:aws:s3:::${BUCKET_SILVER}",
+        "arn:aws:s3:::${BUCKET_CURATED}"
       ]
     },
     {
@@ -58,14 +60,16 @@
         "glue:GetPartitions",
         "glue:CreateTable",
         "glue:UpdateTable",
+        "glue:DeleteTable",
         "glue:BatchCreatePartition",
+        "glue:BatchDeletePartition",
         "glue:GetUserDefinedFunction"
       ],
       "Resource": [
-        "arn:aws:glue:us-east-1:839553328980:database/*",
-        "arn:aws:glue:us-east-1:839553328980:table/*",
-        "arn:aws:glue:us-east-1:839553328980:catalog",
-        "arn:aws:glue:us-east-1:839553328980:userDefinedFunction/*"
+        "arn:aws:glue:${OLIST_REGION}:${OLIST_ACCOUNT}:database/*",
+        "arn:aws:glue:${OLIST_REGION}:${OLIST_ACCOUNT}:table/*",
+        "arn:aws:glue:${OLIST_REGION}:${OLIST_ACCOUNT}:catalog",
+        "arn:aws:glue:${OLIST_REGION}:${OLIST_ACCOUNT}:userDefinedFunction/*"
       ]
     },
     {
@@ -76,7 +80,7 @@
         "s3:PutObject"
       ],
       "Resource": [
-        "arn:aws:s3:::olist-code-*/*"
+        "arn:aws:s3:::${BUCKET_CODE}/*"
       ]
     }
   ]

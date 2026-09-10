@@ -1,0 +1,254 @@
+{
+  "Comment": "Full medallion pipeline: crawl bronze (blanket + per-file healers), run silver, crawl silver, run gold, crawl gold",
+  "StartAt": "StartBronzeCrawler",
+  "States": {
+    "StartBronzeCrawler": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Arguments": {
+        "Name": "olist-raw-crawler"
+      },
+      "Next": "WaitBronze",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Glue.ConcurrentRunsExceededException"
+          ],
+          "IntervalSeconds": 10,
+          "MaxAttempts": 5,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "WaitBronze": {
+      "Type": "Wait",
+      "Seconds": 20,
+      "Next": "PollBronze"
+    },
+    "PollBronze": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:getCrawler",
+      "Arguments": {
+        "Name": "olist-raw-crawler"
+      },
+      "Next": "BronzeChoice"
+    },
+    "BronzeChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $states.input.Crawler.State = 'READY' %}",
+          "Next": "StartOrdersCrawler"
+        },
+        {
+          "Condition": "{% $states.input.Crawler.State = 'FAILED' %}",
+          "Next": "Fail"
+        }
+      ],
+      "Default": "WaitBronze"
+    },
+    "StartOrdersCrawler": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Arguments": {
+        "Name": "olist-raw-orders-crawler"
+      },
+      "Next": "WaitOrders",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Glue.ConcurrentRunsExceededException"
+          ],
+          "IntervalSeconds": 10,
+          "MaxAttempts": 5,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "WaitOrders": {
+      "Type": "Wait",
+      "Seconds": 20,
+      "Next": "PollOrders"
+    },
+    "PollOrders": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:getCrawler",
+      "Arguments": {
+        "Name": "olist-raw-orders-crawler"
+      },
+      "Next": "OrdersChoice"
+    },
+    "OrdersChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $states.input.Crawler.State = 'READY' %}",
+          "Next": "StartTranslationCrawler"
+        },
+        {
+          "Condition": "{% $states.input.Crawler.State = 'FAILED' %}",
+          "Next": "Fail"
+        }
+      ],
+      "Default": "WaitOrders"
+    },
+    "StartTranslationCrawler": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Arguments": {
+        "Name": "olist-raw-translation-crawler"
+      },
+      "Next": "WaitTranslation",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Glue.ConcurrentRunsExceededException"
+          ],
+          "IntervalSeconds": 10,
+          "MaxAttempts": 5,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "WaitTranslation": {
+      "Type": "Wait",
+      "Seconds": 20,
+      "Next": "PollTranslation"
+    },
+    "PollTranslation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:getCrawler",
+      "Arguments": {
+        "Name": "olist-raw-translation-crawler"
+      },
+      "Next": "TranslationChoice"
+    },
+    "TranslationChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $states.input.Crawler.State = 'READY' %}",
+          "Next": "RunSilverEtl"
+        },
+        {
+          "Condition": "{% $states.input.Crawler.State = 'FAILED' %}",
+          "Next": "Fail"
+        }
+      ],
+      "Default": "WaitTranslation"
+    },
+    "RunSilverEtl": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Arguments": {
+        "JobName": "olist-silver-etl"
+      },
+      "Next": "StartSilverCrawler"
+    },
+    "StartSilverCrawler": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Arguments": {
+        "Name": "olist-silver-crawler"
+      },
+      "Next": "WaitSilver",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Glue.ConcurrentRunsExceededException"
+          ],
+          "IntervalSeconds": 10,
+          "MaxAttempts": 5,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "WaitSilver": {
+      "Type": "Wait",
+      "Seconds": 20,
+      "Next": "PollSilver"
+    },
+    "PollSilver": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:getCrawler",
+      "Arguments": {
+        "Name": "olist-silver-crawler"
+      },
+      "Next": "SilverChoice"
+    },
+    "SilverChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $states.input.Crawler.State = 'READY' %}",
+          "Next": "RunGoldEtl"
+        },
+        {
+          "Condition": "{% $states.input.Crawler.State = 'FAILED' %}",
+          "Next": "Fail"
+        }
+      ],
+      "Default": "WaitSilver"
+    },
+    "RunGoldEtl": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Arguments": {
+        "JobName": "olist-gold-etl"
+      },
+      "Next": "StartGoldCrawler"
+    },
+    "StartGoldCrawler": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Arguments": {
+        "Name": "olist-gold-crawler"
+      },
+      "Next": "WaitGold",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Glue.ConcurrentRunsExceededException"
+          ],
+          "IntervalSeconds": 10,
+          "MaxAttempts": 5,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "WaitGold": {
+      "Type": "Wait",
+      "Seconds": 20,
+      "Next": "PollGold"
+    },
+    "PollGold": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:glue:getCrawler",
+      "Arguments": {
+        "Name": "olist-gold-crawler"
+      },
+      "Next": "GoldChoice"
+    },
+    "GoldChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $states.input.Crawler.State = 'READY' %}",
+          "Next": "Succeed"
+        },
+        {
+          "Condition": "{% $states.input.Crawler.State = 'FAILED' %}",
+          "Next": "Fail"
+        }
+      ],
+      "Default": "WaitGold"
+    },
+    "Succeed": {
+      "Type": "Succeed"
+    },
+    "Fail": {
+      "Type": "Fail"
+    }
+  },
+  "QueryLanguage": "JSONata"
+}

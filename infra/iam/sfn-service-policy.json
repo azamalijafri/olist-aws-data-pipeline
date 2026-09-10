@@ -9,15 +9,16 @@
         "glue:GetJobRun"
       ],
       "Resource": [
-        "arn:aws:glue:us-east-1:839553328980:job/olist-silver-etl",
-        "arn:aws:glue:us-east-1:839553328980:job/olist-gold-etl"
+        "arn:aws:glue:${OLIST_REGION}:${OLIST_ACCOUNT}:job/${JOB_BRONZE}",
+        "arn:aws:glue:${OLIST_REGION}:${OLIST_ACCOUNT}:job/${JOB_SILVER}",
+        "arn:aws:glue:${OLIST_REGION}:${OLIST_ACCOUNT}:job/${JOB_GOLD}"
       ]
     },
     {
       "Sid": "PassGlueRoleForJobs",
       "Effect": "Allow",
       "Action": "iam:PassRole",
-      "Resource": "arn:aws:iam::839553328980:role/olist-glue-service-role"
+      "Resource": "arn:aws:iam::${OLIST_ACCOUNT}:role/${ROLE_GLUE_SERVICE}"
     }
   ]
 }

@@ -14,3 +14,6 @@ venv/
 .vscode/
 .idea/
 .DS_Store
+
+# Local environment (secrets). Copy .env.example -> .env and fill in.
+.env
