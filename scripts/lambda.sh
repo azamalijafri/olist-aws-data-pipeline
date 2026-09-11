@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Reference: Lambda function consuming the Kinesis stream (see kinesis.sh).
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_env.sh"
 
 envsubst < "${REPO_ROOT}/infra/iam/lambda-policy.json" > /tmp/ol_lambda_policy.json

@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Reference: IAM roles. Glue service role (jobs) + Step Functions role (orchestration)
-#            + Lambda role (streaming) + Redshift role (serverless).
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_env.sh"
-
-# IAM policy templates use ${VAR} placeholders resolved from .env at apply time.
 
 aws iam create-role \
   --role-name "${ROLE_GLUE_SERVICE}" \
@@ -29,12 +25,10 @@ aws iam put-role-policy \
   --policy-name olist-sfn-permissions \
   --policy-document file:///tmp/ol_sfn_svc_policy.json
 
-# Streaming (see kinesis.sh / lambda.sh)
 aws iam create-role \
   --role-name "${ROLE_LAMBDA}" \
   --assume-role-policy-document file://${REPO_ROOT}/infra/iam/lambda-trust-policy.json
 
-# Redshift (see redshift.sh)
 aws iam create-role \
   --role-name "${ROLE_REDSHIFT}" \
   --assume-role-policy-document file://${REPO_ROOT}/infra/iam/redshift-trust-policy.json

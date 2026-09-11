@@ -32,7 +32,7 @@ def job_conf(required_keys):
     return resolved
 
 
-conf = job_conf(["CURATED_BUCKET", "CATALOG", "SOURCE_DB", "TARGET_DB"])
+conf = job_conf(["JOB_NAME", "CURATED_BUCKET", "CATALOG", "SOURCE_DB", "TARGET_DB"])
 CATALOG = conf["CATALOG"]
 SOURCE_DB = conf["SOURCE_DB"]
 TARGET_DB = conf["TARGET_DB"]
@@ -86,7 +86,7 @@ def main():
     glue_context = GlueContext(sc)
     spark = glue_context.spark_session
     job = Job(glue_context)
-    job.init("olist-gold-etl", {})
+    job.init(conf["JOB_NAME"], {})
 
     customers = read_table(spark, "olist_customers_dataset")
     sellers = read_table(spark, "olist_sellers_dataset")

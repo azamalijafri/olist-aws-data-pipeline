@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Reference: DynamoDB metrics consumed by the streaming Lambda (see kinesis.sh / lambda.sh).
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_env.sh"
 
 aws dynamodb create-table \

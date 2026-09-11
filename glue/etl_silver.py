@@ -21,7 +21,7 @@ def job_conf(required_keys):
     return resolved
 
 
-conf = job_conf(["SILVER_BUCKET", "CATALOG", "SOURCE_DB", "TARGET_DB"])
+conf = job_conf(["JOB_NAME", "SILVER_BUCKET", "CATALOG", "SOURCE_DB", "TARGET_DB"])
 CATALOG = conf["CATALOG"]
 SOURCE_DB = conf["SOURCE_DB"]
 TARGET_DB = conf["TARGET_DB"]
@@ -75,7 +75,7 @@ def main():
     glue_context = GlueContext(sc)
     spark = glue_context.spark_session
     job = Job(glue_context)
-    job.init("olist-silver-etl", {})
+    job.init(conf["JOB_NAME"], {})
 
     table_names = [
         "olist_customers_dataset",

@@ -25,7 +25,7 @@ def job_conf(required_keys):
     return resolved
 
 
-conf = job_conf(["RAW_BUCKET", "BRONZE_BUCKET", "CATALOG", "DB"])
+conf = job_conf(["JOB_NAME", "RAW_BUCKET", "BRONZE_BUCKET", "CATALOG", "DB"])
 RAW_BUCKET = f"s3://{conf['RAW_BUCKET']}"
 CATALOG = conf["CATALOG"]
 DB = conf["DB"]
@@ -128,7 +128,7 @@ def main():
     glue_context = GlueContext(sc)
     spark = glue_context.spark_session
     job = Job(glue_context)
-    job.init("olist-bronze-etl", {})
+    job.init(conf["JOB_NAME"], {})
 
     for name, cols in TABLE_SCHEMAS.items():
         df = (

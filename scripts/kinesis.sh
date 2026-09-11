@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Reference: Kinesis stream + DynamoDB metrics table for the streaming ingest.
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_env.sh"
 
 aws kinesis create-stream \

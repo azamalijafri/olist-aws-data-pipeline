@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Reference: Glue ETL jobs. Glue 5.1 ships Iceberg natively.
-# Catalog config for the custom "olist_catalog" name lives in each script (ice_conf()
-# via SparkConf) because the Glue bootstrap rejects a multi-valued --conf argument.
-# Per-job config (buckets, catalog, database names) comes from .env and is passed as
-# DefaultArguments so the ETL scripts stay resource-agnostic.
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_env.sh"
 
 CODE="s3://${BUCKET_CODE}/glue"
 COMMON_JSON='{"--job-bookmark-option":"job-bookmark-disable","--job-language":"python","--datalake.formats":"iceberg"}'
 
-# Glue passes DefaultArguments into the script's sys.argv; getResolvedOptions()
-# matches keys with a leading "--", so every user config key is prefixed here.
 job_args() {
-  # job_args <raw-json>  -> DefaultArguments with each key prefixed by "--"
   python3 - "${COMMON_JSON}" "$1" <<'EOF'
 import json, sys
 base = json.loads(sys.argv[1]); extra = json.loads(sys.argv[2])
@@ -25,7 +17,6 @@ EOF
 }
 
 put_job() {
-  # put_job <name> <script> <args-json>  -> create-job, or update-job if it exists
   local name="$1" script="$2" args="$3"
   if aws glue get-job --job-name "${name}" --region "${OLIST_REGION}" >/dev/null 2>&1; then
     aws glue update-job \

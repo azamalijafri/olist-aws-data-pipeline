@@ -1,9 +1,4 @@
--- Reference COPY statements. Pre-Iceberg proof: expects the old Parquet table
--- layout under the curated bucket. Iceberg gold tables live under
--- s3://${BUCKET_CURATED}/olist_gold.db/<table>/ and require EXTERNAL schemas +
--- a different source path, so this file is kept as a historical proof of COPY.
---
--- Render placeholders from .env before running:
+-- Pre-Iceberg proof. Render placeholders from .env before running:
 --   envsubst < sql/redshift/02_copy.sql | psql ...
 COPY dim_customer
 FROM 's3://${BUCKET_CURATED}/dim_customer/'

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Reference: Redshift Serverless. COPY gold data for BI queries (see sql/redshift/).
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_env.sh"
 
 : "${REDSHIFT_ADMIN_PASSWORD:?set REDSHIFT_ADMIN_PASSWORD in .env}"
