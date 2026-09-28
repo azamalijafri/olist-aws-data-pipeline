@@ -1,5 +1,5 @@
 {
-  "Comment": "Iceberg medallion pipeline: bronze, silver, gold ETL jobs in sequence",
+  "Comment": "Iceberg medallion pipeline: bronze, silver, gold ETL jobs in sequence, with notification on success or failure",
   "QueryLanguage": "JSONata",
   "StartAt": "RunBronzeEtl",
   "States": {
@@ -20,9 +20,13 @@
       "Catch": [
         {
           "ErrorEquals": [
-            "Glue.JOB_RUN_FAILED_CANCELED"
+            "States.ALL"
           ],
-          "Next": "Fail"
+          "Assign": {
+            "outcome": "failed",
+            "failedJob": "bronze"
+          },
+          "Next": "Outcome"
         }
       ]
     },
@@ -43,9 +47,13 @@
       "Catch": [
         {
           "ErrorEquals": [
-            "Glue.JOB_RUN_FAILED_CANCELED"
+            "States.ALL"
           ],
-          "Next": "Fail"
+          "Assign": {
+            "outcome": "failed",
+            "failedJob": "silver"
+          },
+          "Next": "Outcome"
         }
       ]
     },
@@ -55,7 +63,7 @@
       "Arguments": {
         "JobName": "${JOB_GOLD}"
       },
-      "Next": "Succeed",
+      "Next": "MarkSuccess",
       "Retry": [
         {
           "ErrorEquals": ["States.ALL"],
@@ -66,11 +74,98 @@
       "Catch": [
         {
           "ErrorEquals": [
-            "Glue.JOB_RUN_FAILED_CANCELED"
+            "States.ALL"
+          ],
+          "Assign": {
+            "outcome": "failed",
+            "failedJob": "gold"
+          },
+          "Next": "Outcome"
+        }
+      ]
+    },
+    "MarkSuccess": {
+      "Type": "Pass",
+      "Assign": {
+        "outcome": "succeeded"
+      },
+      "Next": "Outcome"
+    },
+    "Outcome": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Condition": "{% $outcome = 'failed' %}",
+          "Next": "NotifyFailure"
+        }
+      ],
+      "Default": "NotifySuccess"
+    },
+    "NotifySuccess": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:sesv2:sendEmail",
+      "Arguments": {
+        "FromEmailAddress": "${NOTIFY_FROM}",
+        "Destination": {
+          "ToAddresses": [
+            "${NOTIFY_TO}"
+          ]
+        },
+        "Content": {
+          "Simple": {
+            "Subject": {
+              "Data": "TODO_SUBJECT"
+            },
+            "Body": {
+              "Text": {
+                "Data": "TODO_BODY"
+              }
+            }
+          }
+        }
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Succeed"
+        }
+      ],
+      "Next": "Succeed"
+    },
+    "NotifyFailure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:sesv2:sendEmail",
+      "Arguments": {
+        "FromEmailAddress": "${NOTIFY_FROM}",
+        "Destination": {
+          "ToAddresses": [
+            "${NOTIFY_TO}"
+          ]
+        },
+        "Content": {
+          "Simple": {
+            "Subject": {
+              "Data": "TODO_SUBJECT"
+            },
+            "Body": {
+              "Text": {
+                "Data": "TODO_BODY"
+              }
+            }
+          }
+        }
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
           ],
           "Next": "Fail"
         }
-      ]
+      ],
+      "Next": "Fail"
     },
     "Succeed": {
       "Type": "Succeed"

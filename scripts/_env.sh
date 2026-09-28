@@ -17,13 +17,15 @@ BS="${BASH_SOURCE[1]:-${BASH_SOURCE[0]}}"
 SCRIPT_DIR="$(cd "$(dirname "$BS")" && pwd)"
 export SCRIPT_DIR REPO_ROOT
 
+SUBST_KEYS="$(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' "$ENV_FILE" | sed 's/^/${/; s/$/}/' | tr '\n' ' ')"
+
 render() {
-  envsubst < "$1" > "$2"
+  envsubst "$SUBST_KEYS" < "$1" > "$2"
 }
 
 render_policy() {
   local src="$1" tmp
   tmp="$(mktemp --suffix=.json)"
-  envsubst < "$src" > "$tmp"
+  envsubst "$SUBST_KEYS" < "$src" > "$tmp"
   echo "$tmp"
 }

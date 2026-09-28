@@ -29,15 +29,15 @@ ensure_inline_policy() {
 }
 
 ensure_role "${ROLE_GLUE_SERVICE}" "${REPO_ROOT}/infra/iam/glue-trust-policy.json"
-envsubst < "${REPO_ROOT}/infra/iam/glue-service-policy.json" > /tmp/ol_glue_svc_policy.json
+render "${REPO_ROOT}/infra/iam/glue-service-policy.json" /tmp/ol_glue_svc_policy.json
 ensure_inline_policy "${ROLE_GLUE_SERVICE}" olist-glue-permissions /tmp/ol_glue_svc_policy.json
 
 ensure_role "${ROLE_SFN}" "${REPO_ROOT}/infra/iam/sfn-trust-policy.json" "${SFN_ROLE_PATH}"
-envsubst < "${REPO_ROOT}/infra/iam/sfn-service-policy.json" > /tmp/ol_sfn_svc_policy.json
+render "${REPO_ROOT}/infra/iam/sfn-service-policy.json" /tmp/ol_sfn_svc_policy.json
 ensure_inline_policy "${ROLE_SFN}" olist-sfn-permissions /tmp/ol_sfn_svc_policy.json
 
 ensure_role "${ROLE_LAMBDA}" "${REPO_ROOT}/infra/iam/lambda-trust-policy.json"
-envsubst < "${REPO_ROOT}/infra/iam/lambda-policy.json" > /tmp/ol_lambda_policy.json
+render "${REPO_ROOT}/infra/iam/lambda-policy.json" /tmp/ol_lambda_policy.json
 ensure_inline_policy "${ROLE_LAMBDA}" olist-lambda-permissions /tmp/ol_lambda_policy.json
 
 ensure_role "${ROLE_REDSHIFT}" "${REPO_ROOT}/infra/iam/redshift-trust-policy.json"

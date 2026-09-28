@@ -9,7 +9,7 @@ aws iam create-role \
   --assume-role-policy-document file://${REPO_ROOT}/infra/iam/redshift-trust-policy.json \
   --description "Least-privilege role for Redshift Serverless to COPY from the curated bucket"
 
-envsubst < "${REPO_ROOT}/infra/iam/redshift-service-policy.json" > /tmp/ol_redshift_svc_policy.json
+render "${REPO_ROOT}/infra/iam/redshift-service-policy.json" /tmp/ol_redshift_svc_policy.json
 aws iam put-role-policy \
   --role-name "${ROLE_REDSHIFT}" \
   --policy-name olist-redshift-permissions \
