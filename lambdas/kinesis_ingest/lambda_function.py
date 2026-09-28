@@ -34,9 +34,9 @@ def lambda_handler(event, context):
     for r in records:
         day = day_key(r["event_time"])
         ptype = r["payment_type"]
-        for metric in (f"payments:{ptype}|{day}", f"payments:total|{day}"):
+        for metric in (f"payments:{ptype}", "payments:total"):
             table.update_item(
-                Key={"metric": metric},
+                Key={"metric": metric, "day": day},
                 UpdateExpression="ADD count_value :one, sum_value :val",
                 ExpressionAttributeValues={
                     ":one": 1,

@@ -1,52 +1,62 @@
-# Olist E-commerce Analytics Pipeline (AWS)
+# Olist E-commerce Analytics Pipeline
 
-End-to-end medallion-architecture (bronze → silver → gold) data pipeline on AWS for the
-[Olist Brazilian e-commerce dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce). Tables are **Apache Iceberg** in S3, ETL runs on
-**AWS Glue 5.1 (Spark)**, analytics via **Athena**, orchestration via **Step Functions** — plus
-streaming ingest (Kinesis → Lambda → S3/DynamoDB) and an optional **Redshift Serverless** path.
+A medallion data lake (bronze → silver → gold) on AWS, built over the
+[Olist Brazilian e-commerce dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
+— ~100k orders, 1M+ order items, and nine CSVs covering payments, reviews, sellers and products.
 
-## Setup
+Tables are Apache Iceberg in S3, transformed with AWS Glue 5.1 (Spark 3.5.6), queried through
+Athena, and chained in Step Functions. There's also a separate streaming path that pushes live
+events through Kinesis into Lambda, landing them in S3 and a small DynamoDB metrics table.
 
-1. Copy the environment template and fill in your values:
+## How it runs
 
-   ```sh
-   cp .env.example .env
-   ```
-
-   All configuration lives in `.env` (account ID, region, bucket names, job specs, stream/Lambda
-   names, Redshift password). No script hardcodes an account ID, bucket, or ARN.
-
-2. Build once:
-
-   ```sh
-   bash scripts/s3.sh               # buckets, upload CSVs + ETL scripts
-   bash scripts/iam.sh              # least-privilege roles
-   bash scripts/glue-catalog.sh     # bronze/silver/gold databases
-   bash scripts/glue-jobs.sh        # bronze/silver/gold Glue jobs
-   bash scripts/stepfunctions.sh    # sequential orchestrator
-   bash scripts/athena.sh           # sample queries (optional)
-   bash scripts/kinesis.sh          # streaming: stream + bucket + metrics table
-   bash scripts/lambda.sh           # Lambda consumer + event mapping
-   bash scripts/redshift.sh         # Redshift Serverless (optional)
-   ```
-
-## Run the pipeline
-
-```sh
-aws stepfunctions start-execution \
-  --state-machine-arn "arn:aws:states:${OLIST_REGION}:${OLIST_ACCOUNT}:stateMachine:${STATE_MACHINE}"
+```
+s3://olist-raw-*/csv  →  olist_bronze  →  olist_silver  →  olist_gold
+   raw CSVs              typed          deduped, joined   star schema
 ```
 
-Each layer is written with `createOrReplace`, so reruns are idempotent and atomic per Iceberg
-snapshot, and Iceberg time travel works via `FOR VERSION AS OF <snapshot_id>`.
+Bronze is schema-on-read over the CSVs, silver does the real cleanup, gold builds the star
+schema (`fact_payments`, `fact_order_items`, `dim_customer`, `dim_product`, `dim_seller`,
+`dim_date`) — that's the layer you actually query.
 
-## Verification
+Each layer is written with `createOrReplace`, so reruns are atomic and idempotent: one new
+Iceberg snapshot instead of a half-written table. It also buys time travel via
+`FOR VERSION AS OF <snapshot_id>`.
 
-A known-good check on the gold layer: `SELECT SUM(payment_value) FROM olist_gold.fact_payments
-WHERE date_key = 20181017` → **$89.71**. Full-run row counts are validated across all tables
-(e.g. 103,886 payments, 112,650 order items).
+The streaming side (`producer.py` → Kinesis → Lambda → S3 + DynamoDB) is deliberately *not*
+part of that chain. It's there to show a real-time path with live counters, and gold doesn't
+depend on it.
+
+## Running it
+
+```sh
+cp .env.example .env    # fill in account id, region, bucket names
+bash scripts/up.sh      # build everything, run the pipeline, verify
+```
+
+`up.sh` is the whole thing end to end — S3 and Glue scripts, IAM, catalog, the three Glue
+jobs, the state machine, the streaming resources, then it fires an execution and waits.
+About 6–7 minutes, mostly Glue cold starts. `--batch-only` skips streaming, `--no-run` just
+builds the infra.
+
+Any of the `scripts/*.sh` files can be run on their own and re-run safely.
+
+## Checking it worked
+
+```sql
+SELECT SUM(payment_value) FROM olist_gold.fact_payments WHERE date_key = 20181017;
+```
+
+Should be **89.71** — a fixed number from a known-good run, so if it shifts after a rebuild
+something broke. Row counts should match too (103,886 payments, 112,650 order items, 99,441
+customers).
 
 ## Cost
 
-Everything is serverless/on-demand (Athena, Step Functions, Kinesis on-demand, job-driven Glue,
-DynamoDB PAY_PER_REQUEST), so idle cost is near zero. Teardown is by explicit request only.
+Everything is on-demand and job-driven, so idle cost is basically nothing.
+
+```sh
+bash scripts/teardown.sh   # removes everything except the raw bucket
+```
+
+Run it whenever you're not using the project. `bash scripts/up.sh` brings it all back.
