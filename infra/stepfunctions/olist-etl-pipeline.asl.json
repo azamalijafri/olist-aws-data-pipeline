@@ -10,6 +10,13 @@
         "JobName": "${JOB_BRONZE}"
       },
       "Next": "RunSilverEtl",
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 1
+        }
+      ],
       "Catch": [
         {
           "ErrorEquals": [
@@ -26,6 +33,13 @@
         "JobName": "${JOB_SILVER}"
       },
       "Next": "RunGoldEtl",
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 1
+        }
+      ],
       "Catch": [
         {
           "ErrorEquals": [
@@ -42,6 +56,13 @@
         "JobName": "${JOB_GOLD}"
       },
       "Next": "Succeed",
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 1
+        }
+      ],
       "Catch": [
         {
           "ErrorEquals": [
